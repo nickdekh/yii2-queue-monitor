@@ -78,6 +78,7 @@ final class QueueMonitorController extends Controller
             ->setFrom([$fromEmail => $fromName])
             ->setTo($this->to)
             ->setSubject($subject)
+            ->setTextBody($textBody)
             ->setHtmlBody(nl2br(Html::encode($textBody)))
             ->send();
 
