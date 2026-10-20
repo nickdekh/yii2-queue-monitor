@@ -1,0 +1,41 @@
+{
+    "name": "nickdekh/yii2-queue-monitor",
+    "description": "Reusable Yii2 console command for monitoring delayed database queue jobs",
+    "type": "yii2-extension",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Nick Yegorov",
+            "email": "nickdekh@gmail.com"
+        }
+    ],
+    "contributor": [
+        {
+            "name": "Pavel Paschenko",
+            "email": "pasha.pashenko@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "nickdekh\\queueMonitor\\": "src/"
+        }
+    },
+    "extra": {
+        "bootstrap": "nickdekh\\queueMonitor\\QueueMonitorBootstrap"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "yiisoft/yii2": ">=2.0.45"
+    },
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
+        }
+    }
+}
