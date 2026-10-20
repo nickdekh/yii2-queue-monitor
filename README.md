@@ -17,6 +17,7 @@ Configuration can be supplied through application parameters:
     'to' => [
         'ops@example.com',
     ],
+    'PROJECT_NAME' => 'My Project',
     'subject' => 'Alarm - queue task is waiting',
     'cacheKey' => 'monitor-queue-alarmed',
     'tableName' => '{{%queue}}',

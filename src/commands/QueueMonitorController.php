@@ -3,8 +3,11 @@
 namespace nickdekh\queueMonitor\commands;
 
 use Yii;
+use yii\base\InvalidConfigException;
+use yii\caching\CacheInterface;
 use yii\console\Controller;
 use yii\console\ExitCode;
+use yii\db\Connection;
 use yii\db\Query;
 use yii\di\Instance;
 use yii\mail\MailerInterface;
@@ -14,12 +17,17 @@ final class QueueMonitorController extends Controller
     public int $delay = 60;
     public array $to = [];
     public string $subject = 'Alarm - queue task is waiting';
+    public string $PROJECT_NAME = '';
     public string $cacheKey = 'monitor-queue-alarmed';
     public string $tableName = '{{%queue}}';
     public string $db = 'db';
     public string $cache = 'cache';
     public string $mailer = 'mailer';
 
+    /**
+     * @noinspection PhpUnused
+     * @throws InvalidConfigException
+     */
     public function actionIndex(): int
     {
         $this->applyParams();
@@ -29,9 +37,9 @@ final class QueueMonitorController extends Controller
             ->from($this->tableName)
             ->where(['done_at' => null])
             ->andWhere(['<=', 'pushed_at', $threshold])
-            ->count('*', Instance::ensure($this->db, \yii\db\Connection::class));
+            ->count('*', Instance::ensure($this->db, Connection::class));
 
-        $cache = Instance::ensure($this->cache, \yii\caching\CacheInterface::class);
+        $cache = Instance::ensure($this->cache, CacheInterface::class);
 
         if ($waitingJobs === 0) {
             $cache->delete($this->cacheKey);
@@ -53,9 +61,12 @@ final class QueueMonitorController extends Controller
                 Yii::$app->params['fromEmail'] => Yii::$app->params['fromName'],
             ])
             ->setTo($this->to)
-            ->setSubject($this->subject)
+            ->setSubject($this->PROJECT_NAME !== ''
+                ? sprintf('[%s] %s', $this->PROJECT_NAME, $this->subject)
+                : $this->subject)
             ->setTextBody(
-                "Queue has {$waitingJobs} task(s) waiting for more than {$this->delay} seconds."
+                ($this->PROJECT_NAME !== '' ? "Project: {$this->PROJECT_NAME}\n" : '')
+                . "Queue has $waitingJobs task(s) waiting for more than $this->delay seconds."
             )
             ->send();
 
@@ -71,6 +82,7 @@ final class QueueMonitorController extends Controller
         $this->delay = (int)($params['delay'] ?? $this->delay);
         $this->to = $params['to'] ?? $this->to;
         $this->subject = $params['subject'] ?? $this->subject;
+        $this->PROJECT_NAME = (string)($params['PROJECT_NAME'] ?? $this->PROJECT_NAME);
         $this->cacheKey = $params['cacheKey'] ?? $this->cacheKey;
         $this->tableName = $params['tableName'] ?? $this->tableName;
     }
