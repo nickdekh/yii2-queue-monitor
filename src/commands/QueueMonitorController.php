@@ -18,6 +18,8 @@ final class QueueMonitorController extends Controller
     public array $to = [];
     public string $subject = 'Alarm - queue task is waiting';
     public string $PROJECT_NAME = '';
+    public string $fromEmail = '';
+    public string $fromName = '';
     public string $cacheKey = 'monitor-queue-alarmed';
     public string $tableName = '{{%queue}}';
     public string $db = 'db';
@@ -56,18 +58,26 @@ final class QueueMonitorController extends Controller
         }
 
         $mailer = Instance::ensure($this->mailer, MailerInterface::class);
+
+        $fromEmail = $this->fromEmail !== ''
+            ? $this->fromEmail
+            : Yii::$app->params['fromEmail'];
+
+        $fromName = $this->fromName !== ''
+            ? $this->fromName
+            : Yii::$app->params['fromName'];
+
+        $subject = ($this->PROJECT_NAME !== '' ? "[$this->PROJECT_NAME] " : '')
+            . $this->subject;
+
+        $textBody = ($this->PROJECT_NAME !== '' ? "Project: $this->PROJECT_NAME\n" : '')
+            . "Queue has $waitingJobs task(s) waiting for more than $this->delay seconds.";
+
         $mailer->compose()
-            ->setFrom([
-                Yii::$app->params['fromEmail'] => Yii::$app->params['fromName'],
-            ])
+            ->setFrom([$fromEmail => $fromName])
             ->setTo($this->to)
-            ->setSubject($this->PROJECT_NAME !== ''
-                ? sprintf('[%s] %s', $this->PROJECT_NAME, $this->subject)
-                : $this->subject)
-            ->setTextBody(
-                ($this->PROJECT_NAME !== '' ? "Project: {$this->PROJECT_NAME}\n" : '')
-                . "Queue has $waitingJobs task(s) waiting for more than $this->delay seconds."
-            )
+            ->setSubject($subject)
+            ->setTextBody($textBody)
             ->send();
 
         $cache->set($this->cacheKey, true);
@@ -79,11 +89,38 @@ final class QueueMonitorController extends Controller
     {
         $params = Yii::$app->params['monitor-queue'] ?? [];
 
-        $this->delay = (int)($params['delay'] ?? $this->delay);
-        $this->to = $params['to'] ?? $this->to;
-        $this->subject = $params['subject'] ?? $this->subject;
-        $this->PROJECT_NAME = (string)($params['PROJECT_NAME'] ?? $this->PROJECT_NAME);
-        $this->cacheKey = $params['cacheKey'] ?? $this->cacheKey;
-        $this->tableName = $params['tableName'] ?? $this->tableName;
+        if (!in_array('delay', $this->passedOptions, true)) {
+            $this->delay = (int)($params['delay'] ?? $this->delay);
+        }
+        if (!in_array('to', $this->passedOptions, true)) {
+            $this->to = $params['to'] ?? $this->to;
+        }
+        if (!in_array('subject', $this->passedOptions, true)) {
+            $this->subject = $params['subject'] ?? $this->subject;
+        }
+        if (!in_array('PROJECT_NAME', $this->passedOptions, true)) {
+            $this->PROJECT_NAME = (string)($params['PROJECT_NAME'] ?? $this->PROJECT_NAME);
+        }
+        if (!in_array('fromEmail', $this->passedOptions, true)) {
+            $this->fromEmail = (string)($params['fromEmail'] ?? $this->fromEmail);
+        }
+        if (!in_array('fromName', $this->passedOptions, true)) {
+            $this->fromName = (string)($params['fromName'] ?? $this->fromName);
+        }
+        if (!in_array('cacheKey', $this->passedOptions, true)) {
+            $this->cacheKey = $params['cacheKey'] ?? $this->cacheKey;
+        }
+        if (!in_array('tableName', $this->passedOptions, true)) {
+            $this->tableName = $params['tableName'] ?? $this->tableName;
+        }
+        if (!in_array('db', $this->passedOptions, true)) {
+            $this->db = $params['db'] ?? $this->db;
+        }
+        if (!in_array('cache', $this->passedOptions, true)) {
+            $this->cache = $params['cache'] ?? $this->cache;
+        }
+        if (!in_array('mailer', $this->passedOptions, true)) {
+            $this->mailer = $params['mailer'] ?? $this->mailer;
+        }
     }
 }
