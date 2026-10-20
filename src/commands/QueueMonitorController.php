@@ -10,6 +10,7 @@ use yii\console\ExitCode;
 use yii\db\Connection;
 use yii\db\Query;
 use yii\di\Instance;
+use yii\helpers\Html;
 use yii\mail\MailerInterface;
 
 final class QueueMonitorController extends Controller
@@ -78,6 +79,7 @@ final class QueueMonitorController extends Controller
             ->setTo($this->to)
             ->setSubject($subject)
             ->setTextBody($textBody)
+            ->setHtmlBody(nl2br(Html::encode($textBody)))
             ->send();
 
         $cache->set($this->cacheKey, true);
